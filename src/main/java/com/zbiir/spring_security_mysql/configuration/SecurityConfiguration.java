@@ -12,12 +12,17 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
+        //(debug = true)
 public class SecurityConfiguration {
+
+    @Autowired
+    private JwtFilter jwtFilter;
 
     @Autowired
     private MyUserDetailService userDetailsService;
@@ -26,15 +31,16 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(request ->
-                request.requestMatchers("/home", "/add_user","/jwt_token").permitAll()
+                request.requestMatchers("/home", "/add_user").permitAll()
                         .requestMatchers("/user/**").hasRole("USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        //.requestMatchers("/jwt_token").hasAnyRole("ADMIN","USER")
+                        .requestMatchers("/jwt_token").hasAnyRole("ADMIN","USER")
                         .anyRequest().authenticated());
         http.formLogin(withDefaults());
         http.httpBasic(withDefaults()); //login by POSTMAN
         http.csrf(customizer -> customizer.disable());
         http.logout(withDefaults());
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
